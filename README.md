@@ -1,474 +1,560 @@
 # 🧠 Guess Master
 
-### A Multi-Agent AI Decision-Making Game
+### Multi-Agent AI Decision Making Under Risk
 
-Guess Master is a multi-agent decision-making game where multiple AI personas independently analyze the same risk and vote on whether the player should **ADD** the offered value or **REJECT** it.
+**Guess Master** is a multi-agent AI game where multiple autonomous personas analyze the same offer, make independent decisions, and collectively determine whether you should take the risk.
 
-What starts as a simple number game becomes an experimental platform for exploring:
+What begins as a simple tower-building game becomes a platform for experimenting with **LLM-powered agents, behavioral personas, memory, adaptation, deliberation, relationships, and large-scale simulations.**
 
-- Multi-agent systems
-- AI personas and behavioral modeling
-- Structured LLM outputs
-- Agent memory
-- Adaptive decision-making
-- Multi-agent deliberation
-- Agent relationships and influence
-- Procedurally generated personas
-- Large-scale simulations
-- Behavioral statistics
-- Local LLM inference
-
-The AI makes the decisions. **Python makes the rules.**
+> **The AI makes the decisions. Python makes the rules.**
 
 ---
 
-## 🎮 The Concept
+## 🎮 How It Works
 
-Each round, the player receives an offer between **1 and 100**.
+Each round, you receive an offer between **1 and 100**.
 
-A panel of AI personalities analyzes the offer.
+Five AI personas evaluate the offer:
 
-For example:
+| Agent | Personality      | Approach                               |
+| :---: | ---------------- | -------------------------------------- |
+|   📊  | **Analyst**      | Quantitative and expected-value driven |
+|   🎲  | **Gambler**      | Aggressive and reward-seeking          |
+|  🛡️  | **Conservative** | Risk-averse and score-preserving       |
+|   ⚡   | **Impulsive**    | Intuitive and spontaneous              |
+|   ♟️  | **Strategist**   | Long-term and risk-adjusted            |
 
-| Agent | Personality | Decision Style |
-|---|---|---|
-| 📊 Analyst | Quantitative | Expected-value driven |
-| 🎲 Gambler | Aggressive | High-risk / high-reward |
-| 🛡️ Conservative | Risk-averse | Protect the current score |
-| ⚡ Impulsive | Instinctive | Fast, intuition-based decisions |
-| ♟️ Strategist | Long-term | Risk-adjusted thinking |
+Each agent independently chooses:
 
-Each agent independently decides:
+### 🟢 ADD
 
-> **ADD** — take the risk and add the offer to the score
+Take the risk and add the offer to the tower.
 
-or
+### 🔴 REJECT
 
-> **REJECT** — reject the offer and end the run.
+Reject the offer and end the run.
 
-The majority decision determines what happens next.
+The majority decision determines what happens.
 
-If **ADD** wins, the game performs a bust roll.
+```text
+                  OFFER
+                    │
+                    ▼
+          ┌───────────────────┐
+          │    AI PERSONAS    │
+          └─────────┬─────────┘
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+     Analyst     Gambler    Conservative
+        │           │           │
+        └───────────┼───────────┘
+                    │
+                    ▼
+              MAJORITY VOTE
+                    │
+             ┌──────┴──────┐
+             ▼             ▼
+           ADD           REJECT
+             │             │
+             ▼             ▼
+         BUST ROLL      RUN ENDS
+             │
+       ┌─────┴─────┐
+       ▼           ▼
+     SAFE         BUST
+       │           │
+       ▼           ▼
+   SCORE +       SCORE = 0
+    OFFER
+```
 
-If the roll succeeds:
+The objective:
 
-Current Score + Offer
+> **Build the highest tower possible without getting greedy.**
 
-If the roll fails:
+---
 
-💥 BUST
-Final Score = 0
+# ✨ Why Guess Master?
 
-The goal is simple:
+Most AI game projects ask an LLM for a response and directly use that response.
 
-Build the tallest tower without getting greedy.
+Guess Master takes a different approach.
 
-✨ Features
-🤖 Multi-Agent AI
+### The LLM handles reasoning.
 
-Instead of relying on a single AI response, Guess Master uses multiple AI personas to make decisions.
+### The application handles truth.
 
-Each agent receives its own persona-specific context and produces a structured decision.
+The model decides:
 
-The default system uses five core personas, but the architecture supports dynamically generated agent rosters.
+```text
+ADD / REJECT
+Confidence
+Reasoning
+```
 
-🎭 Behavioral Personas
+Python decides:
 
-Agents are represented using structured PersonaProfile objects.
+```text
+Majority
+Bust probability
+Score
+Round progression
+Game state
+```
 
-A persona can define:
+This separation makes the system much more reliable and gives the project a proper **agent architecture** rather than simply wrapping an LLM in a game.
 
+---
+
+# 🧩 Feature Overview
+
+| Category             | Features                                                          |
+| -------------------- | ----------------------------------------------------------------- |
+| 🎭 **Agents**        | Five core personas, generated personas, configurable agent counts |
+| 🤖 **LLM**           | Local Ollama inference, structured responses, model validation    |
+| 🧠 **Memory**        | Bounded round history and contextual agent memory                 |
+| 📈 **Adaptation**    | Dynamic risk tolerance based on previous outcomes                 |
+| 💬 **Deliberation**  | Two-stage independent voting + group deliberation                 |
+| 🔗 **Relationships** | Trust, distrust, respect and dismissal between agents             |
+| 🧪 **Simulation**    | Automated multi-agent experiments with configurable parameters    |
+| 📊 **Analytics**     | Behavioral statistics and performance metrics                     |
+| 🛡️ **Reliability**  | Validation, timeouts, failure-safe round handling                 |
+| 🌐 **Interface**     | CLI game + browser-based Tower Votes                              |
+| 🧪 **Testing**       | Dedicated pytest test suite                                       |
+
+---
+
+# 🤖 AI System
+
+## Local LLMs with Ollama
+
+Guess Master uses **Ollama** for local model inference.
+
+This means the game can run without sending persona decisions to an external API.
+
+Example configuration:
+
+```env
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_TIMEOUT_SECONDS=180
+OLLAMA_KEEP_ALIVE=10m
+```
+
+The Ollama integration handles:
+
+* Connection validation
+* Model availability
+* Model warm-up
+* Request timeouts
+* Keep-alive configuration
+* Structured responses
+* Response validation
+
+---
+
+# 🎭 Persona System
+
+Personas are represented as structured profiles rather than simple prompt strings.
+
+Each persona can contain:
+
+```text
 Identity
 Objective
-Risk tolerance
-Decision philosophy
-Behavioral tendencies
-Communication style
+Risk Tolerance
+Decision Philosophy
+Behavioral Tendencies
+Communication Style
 Anti-patterns
+```
 
-This allows the same underlying LLM to behave like fundamentally different decision-makers.
-
-For example:
-
-Gambler
-→ prioritizes upside
-→ accepts high risk
-→ more likely to ADD
-
-Conservative
-→ prioritizes score preservation
-→ dislikes uncertainty
-→ more likely to REJECT
-
-This makes the system persona-driven rather than prompt-driven.
-
-🧠 LLM Architecture
-
-Guess Master uses Ollama for local LLM inference.
-
-The LLM is responsible for:
-
-Understanding the offer
-Applying the persona's reasoning style
-Evaluating risk
-Producing a decision
-Providing confidence
-Explaining its reasoning
-
-The LLM does not control the game state.
-
-Instead, the model returns a structured response that is validated before being passed to the game engine.
-
-Conceptually:
-
-             ┌──────────────────┐
-             │    Game Round    │
-             └────────┬─────────┘
-                      │
-                      ▼
-             ┌──────────────────┐
-             │ Persona Prompts  │
-             └────────┬─────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-     Analyst       Gambler      Conservative
-        │             │             │
-        ▼             ▼             ▼
-      LLM           LLM           LLM
-        │             │             │
-        └─────────────┼─────────────┘
-                      ▼
-              Structured Votes
-                      │
-                      ▼
-             ┌──────────────────┐
-             │   Game Engine    │
-             └────────┬─────────┘
-                      │
-             ┌────────┴────────┐
-             ▼                 ▼
-          Majority          Game Rules
-             │                 │
-             └────────┬────────┘
-                      ▼
-                 Game State
-🛡️ LLM vs Game Logic
-
-One of the core design principles of Guess Master is:
-
-LLMs propose. Deterministic code disposes.
-
-The AI can say:
-
-{
-  "decision": "ADD",
-  "confidence": 0.82,
-  "reason": "The potential reward justifies the moderate risk."
-}
-
-But it cannot directly modify:
-
-Score
-Bust probability
-Round number
-Majority result
-Game-over state
-
-Python remains the source of truth for the game.
-
-This prevents unpredictable LLM output from corrupting the game mechanics.
-
-🗳️ Majority Voting
-
-Once the agents have voted, the game engine counts their decisions.
-
-With five agents:
-
-ADD      █████  3
-REJECT   ███    2
-
-Result:
-
-MAJORITY → ADD
-
-The voting system is deterministic and independent from the LLM.
-
-The system also enforces odd agent counts when scaling the number of agents, preventing majority ties.
-
-🧠 Agent Memory
-
-Agents can receive a bounded summary of previous completed rounds.
-
-This gives the personas limited game history without giving them unlimited context.
+This allows the same underlying LLM to behave as different decision-making agents.
 
 For example:
 
-Previous Round:
-Offer: 20
+```text
+GAMBLER
+High risk tolerance
+        ↓
+More likely to ADD
+
+CONSERVATIVE
+Low risk tolerance
+        ↓
+More likely to REJECT
+```
+
+The persona system is completely separate from the game engine, making new personalities easy to add.
+
+---
+
+# 🧠 Agent Memory
+
+Agents can use information from previously completed rounds.
+
+Memory is intentionally **bounded** to prevent uncontrolled context growth.
+
+A future decision can receive information such as:
+
+```text
+Previous Offer: 25
 Decision: ADD
 Result: SAFE_ADD
-Score: 20
+Score: 25
+```
 
-Current Round:
-Offer: 35
+Importantly, current-round agent decisions remain isolated during normal independent voting.
 
-The system intentionally keeps memory bounded to prevent unnecessary context growth.
+---
 
-Agent memory is also separated from current-round decision making.
+# 📈 Adaptive Agents
 
-📈 Adaptive Personalities
+Adaptive mode allows agents to modify their effective risk tolerance based on previous outcomes.
 
-Guess Master includes an optional adaptive mode.
+```text
+          ADD + SAFE
+              │
+              ▼
+      Risk tolerance ↑
+
+
+           ADD + BUST
+              │
+              ▼
+      Risk tolerance ↓
+
+
+             REJECT
+              │
+              ▼
+          No change
+```
+
+Adaptation is bounded within a defined range.
+
+The original persona profile remains unchanged.
+
+### This is not model training.
+
+No weights are updated and no reinforcement learning occurs.
+
+The system simply modifies the context supplied to the LLM.
 
 Enable it with:
 
+```bash
 python main.py --adaptive
+```
 
-Agents can gradually adjust their effective risk tolerance based on previous outcomes.
+---
 
-For example:
+# 💬 Multi-Agent Deliberation
 
-ADD + SAFE_ADD
-        ↓
-Risk tolerance increases
+Normal mode:
 
-ADD + BUST
-        ↓
-Risk tolerance decreases
+```text
+Offer
+ ↓
+Independent Votes
+ ↓
+Majority
+```
 
-REJECT
-        ↓
-No change
+Deliberation mode:
 
-Adaptation is bounded so that agents don't become permanently extreme.
-
-The original persona profile remains immutable; adaptation modifies only the effective risk tolerance during the game.
-
-Important
-
-This is not model training.
-
-The LLM weights are never changed.
-
-The system modifies the context given to the model.
-
-💬 Multi-Agent Deliberation
-
-Guess Master can optionally use a two-stage decision process.
-
-Enable it with:
-
-python main.py --deliberate
-
-Instead of:
-
-Agent → Vote
-
-the system becomes:
-
-Initial Votes
-      ↓
-Group Deliberation
-      ↓
+```text
+Offer
+ ↓
+Independent Votes
+ ↓
+Shared Deliberation
+ ↓
 Final Votes
-      ↓
-Majority Decision
+ ↓
+Majority
+```
 
-Agents can reconsider their original position after seeing the group's initial decisions.
+Enable with:
 
-This makes it possible to experiment with questions such as:
+```bash
+python main.py --deliberate
+```
 
-Do agents converge?
-Does a strong majority influence minority agents?
-Does deliberation improve outcomes?
-Does deliberation create groupthink?
-How does consensus affect risk-taking?
-🔗 Persona Relationships
+This allows experiments around:
 
-Guess Master also supports relationships between agents.
+* Consensus
+* Group influence
+* Minority opinions
+* Decision changes
+* Groupthink
+* Collective risk-taking
 
-Enable them with:
+Only the **final votes** determine the game outcome.
 
-python main.py --deliberate --relationships
+---
 
-Agents can have relationships such as:
+# 🔗 Persona Relationships
 
+Agents can also have relationships with one another.
+
+Supported relationship types include:
+
+```text
 TRUSTS
 DISTRUSTS
 RESPECTS
 DISMISSES
-
-Relationships can influence how agents interpret other agents during deliberation.
+```
 
 For example:
 
-Analyst
-    ↓ respects
-Strategist
+```text
+Analyst ───── respects ─────► Strategist
 
-Gambler
-    ↓ distrusts
-Conservative
+Gambler ─── distrusts ──────► Conservative
+```
 
-The relationship system affects agent context, not the underlying voting mathematics.
+Relationships influence the context agents receive during deliberation.
 
-👥 Dynamic Persona Generation
+They do **not** modify:
 
-The system is not limited to five hard-coded agents.
+* Majority calculation
+* Bust probability
+* Score
+* Game rules
 
-Additional personas can be procedurally generated using combinations of controlled traits.
+This keeps social influence separate from deterministic game mechanics.
 
-Generated personas can vary in:
+Enable with:
 
-Risk tolerance
-Objective
-Decision philosophy
-Communication style
-Behavioral tendencies
-Anti-patterns
+```bash
+python main.py --deliberate --relationships
+```
 
-The simulation system supports configurable agent counts while enforcing valid voting configurations.
+---
 
-This allows experiments with larger groups such as:
+# 👥 Generated Personas
 
-5 agents
-11 agents
-21 agents
-51 agents
-🧪 Simulation Mode
+The system can generate additional agents using controlled combinations of behavioral traits.
 
-Guess Master includes a non-interactive simulation system for running experiments without manually playing every round.
+Generated personas can vary by:
+
+* Risk tolerance
+* Objective
+* Philosophy
+* Communication style
+* Behavioral tendencies
+* Anti-patterns
+
+This allows the system to move beyond the original five-agent setup.
+
+Agent counts can be configured for simulation experiments while maintaining valid majority voting.
+
+---
+
+# 🧪 Simulation Framework
+
+Guess Master isn't limited to manually playing the game.
+
+It includes an automated simulation layer for running controlled experiments.
 
 Simulation parameters can include:
 
-Agent count
-Random seed
-Round limit
-Mock vs LLM agents
-Deliberation
-Adaptive behavior
-Generated personas
-History
-Statistics
-Performance metrics
+| Parameter          | Purpose                                    |
+| ------------------ | ------------------------------------------ |
+| Agent count        | Test different group sizes                 |
+| Seed               | Reproduce experiments                      |
+| Round limit        | Control simulation length                  |
+| Mock / LLM         | Compare deterministic and LLM agents       |
+| Deliberation       | Test independent vs social decision-making |
+| Adaptation         | Test evolving risk behavior                |
+| Generated personas | Create larger populations                  |
+| History            | Preserve previous round context            |
+| Metrics            | Measure performance and behavior           |
 
 Example:
 
+```bash
 python main.py --simulate --mock --agent-count 11 --seed 42
+```
 
-This makes the project useful not only as a game, but also as a small multi-agent experimentation framework.
+This turns Guess Master into a small **multi-agent experimentation platform** rather than only a game.
 
-📊 Behavioral Statistics
+---
 
-After a game or simulation, the system can collect statistics such as:
+# 📊 Statistics & Analytics
 
-Completed rounds
-Final score
-Final outcome
-Average offer
-ADD count
-REJECT count
-ADD percentage
-REJECT percentage
-Average confidence
-Majority alignment
-ADD decisions before SAFE_ADD
-ADD decisions before BUST
-Adaptive risk changes
+The system records behavioral statistics such as:
 
-These statistics describe agent behavior, rather than pretending there is a universal "correct" AI decision.
+* Completed rounds
+* Final score
+* Final outcome
+* Average offer
+* ADD count
+* REJECT count
+* ADD percentage
+* REJECT percentage
+* Average confidence
+* Majority alignment
+* ADD decisions before SAFE outcomes
+* ADD decisions before BUST outcomes
+* Adaptive risk changes
 
-⚡ Performance Metrics
+These metrics describe **agent behavior**, rather than assuming there is always one objectively correct decision.
 
-LLM calls can be instrumented using AgentCallMetrics.
+---
+
+# ⚡ Performance Monitoring
+
+Agent inference performance can be tracked using call metrics.
 
 Tracked information includes:
 
+```text
 Successful calls
 Failed calls
 Total latency
-Average persona-call latency
+Average call latency
 Round latency
-Number of agents
-Configured concurrency
+Agent count
+Concurrency configuration
+```
 
-This makes it possible to evaluate the performance cost of scaling the multi-agent system.
-
-🛡️ Failure-Safe Execution
-
-LLM applications can fail for reasons unrelated to game logic.
+This makes it possible to study the cost of increasing the number of agents.
 
 For example:
 
-Ollama unavailable
-Model timeout
-Invalid response
-Connection failure
+```text
+5 agents
+   ↓
+11 agents
+   ↓
+21 agents
+   ↓
+51 agents
+```
 
-Guess Master does not silently convert these failures into arbitrary decisions.
+---
 
-If a persona call fails during a round:
+# 🛡️ Reliability & Failure Handling
 
-LLM failure
-    ↓
-Round cancelled
-    ↓
-Game state preserved
-    ↓
-Player can retry
+LLM applications can fail independently of game logic.
 
-The system therefore avoids corrupting the score or inventing an AI decision when the model failed.
+Guess Master handles failures without corrupting the game state.
 
-🧪 Mock Mode
+```text
+LLM Failure
+     │
+     ▼
+Round Cancelled
+     │
+     ▼
+State Preserved
+     │
+     ▼
+Player Can Retry
+```
 
-Guess Master includes deterministic mock agents.
+The system does **not** silently turn an API failure into an arbitrary AI decision.
 
-Run:
+Structured outputs are also validated before being consumed by the game engine.
 
-python main.py --mock
+---
 
-Mock mode is useful for:
+# 🌐 Tower Votes
 
-Development
-Testing
-Debugging
-Demonstrations
-Offline usage
-Reproducible simulations
+Guess Master includes a browser-based version called:
 
-This means the application does not require an LLM server just to test the game mechanics.
+## Tower Votes
 
-🌐 Browser Interface
+The browser interface turns the game into a visual tower-building experience.
 
-Guess Master also includes a local browser version called:
+The interface allows players to:
 
-Tower Votes
+* Enter offers
+* Watch AI decisions
+* See majority results
+* Build their tower
+* Track their score
+* Play multiple runs
+* Compare previous runs
 
-The browser interface presents the game as a visual tower-building experience.
+Run the browser version with mock agents:
 
-Players can:
-
-Enter offers
-View persona decisions
-See majority results
-Build their tower
-Track their score
-Play multiple runs
-Compare previous runs
-
-Run the web version with mock agents:
-
+```bash
 python web_app.py --mock
+```
 
-Or use the local Ollama model:
+Or use Ollama:
 
+```bash
 python web_app.py
+```
 
 Then open:
 
+```text
 http://127.0.0.1:5050
-🏗️ Project Architecture
+```
+
+---
+
+# 🏗️ Architecture
+
+Guess Master is organized into several independent layers.
+
+```text
+┌─────────────────────────────────────────┐
+│             USER INTERFACE              │
+│                                         │
+│        CLI              Web App         │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│              GAME ENGINE                │
+│                                         │
+│   State • Rules • Voting • History      │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│             AGENT SYSTEM                │
+│                                         │
+│ Personas • Memory • Adaptation          │
+│ Deliberation • Relationships             │
+│ Persona Generation                       │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│             LLM LAYER                   │
+│                                         │
+│             Ollama                      │
+└─────────────────────────────────────────┘
+```
+
+### Core principle
+
+```text
+LLM
+ ↓
+Decision
+ ↓
+Validation
+ ↓
+Game Engine
+ ↓
+Deterministic Outcome
+```
+
+---
+
+# 📁 Project Structure
+
+```text
 guess-master/
 │
 ├── ai/
@@ -523,297 +609,346 @@ guess-master/
 ├── requirements.txt
 ├── pytest.ini
 └── .env.example
-🔧 Installation
-Requirements
-Python 3.10+
-Ollama
-A compatible local LLM
-pip
+```
 
-Ollama:
+---
 
-https://ollama.com/
+# 🚀 Getting Started
 
-1. Clone the repository
+## Requirements
+
+* Python **3.10+**
+* [Ollama](https://ollama.com/)
+* A compatible local LLM
+* pip
+
+---
+
+## 1. Clone
+
+```bash
 git clone https://github.com/Amru501/guess-master.git
 cd guess-master
-2. Create a virtual environment
-Windows
+```
+
+---
+
+## 2. Create a Virtual Environment
+
+### Windows
+
+```bash
 python -m venv .venv
 .venv\Scripts\activate
-macOS / Linux
+```
+
+### macOS / Linux
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
-3. Install dependencies
+```
+
+---
+
+## 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
-🤖 Ollama Setup
+```
 
-Install Ollama and download a compatible model.
+---
 
-For example:
+## 4. Configure Ollama
 
+Install Ollama and download a model.
+
+Example:
+
+```bash
 ollama pull qwen2.5:3b
+```
 
-Create your .env file from the example:
+Create `.env` from `.env.example`.
 
-Windows
+### Windows
+
+```bash
 copy .env.example .env
-macOS / Linux
+```
+
+### macOS / Linux
+
+```bash
 cp .env.example .env
+```
 
-Example configuration:
+Configure:
 
+```env
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:3b
 OLLAMA_TIMEOUT_SECONDS=180
 OLLAMA_KEEP_ALIVE=10m
+```
 
-Make sure Ollama is running before starting the game.
+---
 
-🎮 Usage
-Basic CLI Game
+# ▶️ Running the Game
+
+## Basic Game
+
+```bash
 python main.py
+```
 
-This starts the normal game using the configured Ollama model.
+Uses the configured local LLM.
 
-Mock Mode
+---
+
+## Mock Mode
+
+```bash
 python main.py --mock
+```
 
-Runs the game without Ollama.
+Runs without Ollama.
 
-Adaptive Mode
+Useful for:
+
+* Development
+* Testing
+* Debugging
+* Demonstrations
+* Reproducible experiments
+
+---
+
+## Adaptive Mode
+
+```bash
 python main.py --adaptive
+```
 
-Enables adaptive risk tolerance.
+---
 
-Deliberation Mode
+## Deliberation
+
+```bash
 python main.py --deliberate
+```
 
-Enables two-stage agent deliberation.
+---
 
-Relationship Mode
+## Deliberation + Relationships
+
+```bash
 python main.py --deliberate --relationships
+```
 
-Enables deliberation and persona relationships.
+---
 
-Verbose Mode
+## Verbose Mode
+
+```bash
 python main.py --verbose
+```
 
-Useful for seeing additional agent/game information during execution.
+---
 
-Show History
+## View History
+
+```bash
 python main.py --show-history
+```
 
-Displays completed round history during gameplay.
+---
 
-Save Game History
+## Save History
+
+```bash
 python main.py --history-file game-history.json
-Save Statistics
+```
+
+---
+
+## Save Statistics
+
+```bash
 python main.py --stats-file game-stats.json
-Export Relationship Graph
+```
+
+---
+
+## Export Relationship Graph
+
+```bash
 python main.py --export-graph persona-graph.json
-🌐 Running the Web Version
-Mock Mode
-python web_app.py --mock
-Ollama Mode
-python web_app.py
+```
 
-Open:
+---
 
-http://127.0.0.1:5050
-🧪 Running Tests
+# 🧪 Testing
 
-Guess Master includes a pytest test suite covering the major components of the system.
+Run the complete test suite:
 
-Run:
-
+```bash
 pytest
+```
 
-For verbose output:
+Verbose:
 
+```bash
 pytest -v
+```
 
-The test suite covers areas including:
+The test suite covers:
 
-Game rules
-Game engine
-Persona profiles
-LLM integration
-History
-Statistics
-Adaptation
-Deliberation
-Relationships
-Persona generation
-Simulation
-CLI behavior
-Web application behavior
+* Game rules
+* Game engine
+* Persona profiles
+* LLM integration
+* History
+* Statistics
+* Adaptation
+* Deliberation
+* Relationships
+* Simulation
+* CLI behavior
+* Web application
 
-LLM-dependent functionality can be mocked, allowing the test suite to run without a live Ollama model.
+LLM functionality can be mocked, so tests do not require a live Ollama server.
 
-🧩 Design Principles
-1. Deterministic Game State
+---
 
-The game engine is the authority on:
+# 🔬 Development Evolution
 
-Score
-Bust probability
-Majority voting
-Round progression
-Game-over conditions
-2. Structured AI Output
+Guess Master was developed incrementally, with each version introducing another layer of the multi-agent system.
 
-LLM responses are validated against structured schemas rather than being interpreted as arbitrary text.
+|  Version | Development                              |
+| :------: | ---------------------------------------- |
+|  **V0**  | Five deterministic personas              |
+|  **V1**  | Local Ollama-powered agents              |
+| **V1.1** | Reliability and structured LLM responses |
+|  **V2**  | Reusable persona profiles                |
+|  **V3**  | Bounded memory and history               |
+|  **V4**  | Behavioral statistics                    |
+|  **V5**  | Adaptive risk tolerance                  |
+|  **V6**  | Multi-agent deliberation                 |
+|  **V7**  | Persona relationship graph               |
+|  **V8**  | Generated personas and simulations       |
+|  **Web** | Tower Votes browser interface            |
 
-This reduces the chance of malformed model output affecting the game.
+---
 
-3. Separation of Concerns
+# ⚠️ Limitations
 
-The project separates:
+Guess Master is an exploration of multi-agent AI systems, not a claim that each persona represents an independent intelligence.
 
-AI integration
-       ↓
-Agent behavior
-       ↓
-Game logic
-       ↓
-Statistics
-       ↓
-Interfaces
+### Shared Model
 
-The CLI and web interface use the same underlying game concepts rather than implementing separate game rules.
+Multiple agents may use the same underlying LLM.
 
-4. Explicit Experimental Modes
+Behavioral diversity comes primarily from:
 
-Advanced behavior is opt-in.
+* Persona configuration
+* Prompt context
+* Memory
+* Adaptation
+* Relationships
 
-The basic game remains simple, while users can progressively enable:
+### Deliberation Changes Independence
 
-Adaptive behavior
-       ↓
-Deliberation
-       ↓
-Relationships
-       ↓
-Generated agents
-       ↓
-Simulation
+Independent mode keeps current-round decisions isolated.
 
-This makes it possible to compare different multi-agent configurations.
+Deliberation mode intentionally allows agents to see the group's initial decisions.
 
-📚 Version Evolution
+### Adaptation Isn't Training
 
-The project was developed incrementally, with each stage adding a new capability.
+Adaptive behavior changes prompt context rather than model parameters.
 
-Version	Feature
-V0	Five deterministic mock personas
-V1	Local Ollama-backed LLM agents
-V1.1	Reliability improvements and structured LLM responses
-V2	Rich reusable persona profiles
-V3	Bounded game history and agent memory
-V4	Behavioral statistics
-V5	Adaptive risk tolerance
-V6	Two-stage deliberation
-V7	Persona relationship graph
-V8	Generated personas, configurable agent counts and simulation
-Web	Browser-based Tower Votes interface
-⚠️ Limitations
+No weights are updated during gameplay.
 
-Guess Master is an experimentation project rather than a claim that each persona represents a completely independent intelligence.
+### Generated Agents Aren't Separate Models
 
-Shared underlying model
+Generated personas are different behavioral configurations using the same inference infrastructure.
 
-Multiple personas can use the same underlying LLM.
+### Local Inference Has Hardware Costs
 
-The diversity primarily comes from:
+Performance depends on:
 
-Persona profiles
-Prompt construction
-Context
-Decision history
-Relationships
-Adaptation
-Deliberation reduces independence
+* CPU
+* GPU
+* RAM
+* Model size
+* Quantization
+* Number of agents
+* Concurrency
 
-In independent mode, agents do not see other agents' current-round decisions.
+---
 
-In deliberation mode, agents can see the group's initial decisions.
+# 🚧 Future Development
 
-Therefore deliberation intentionally changes the independence assumption.
+Possible future directions include:
 
-Adaptation is not machine learning
+* Persistent long-term agent memory
+* Cross-game learning
+* Larger-scale simulations
+* Experiment dashboards
+* Agent behavior visualization
+* Alternative voting mechanisms
+* Weighted voting
+* Agent-specific learning
+* Evolving relationship networks
+* Improved concurrent inference
+* Additional local model backends
+* Comparative model evaluation
+* Agent tournaments
 
-Adaptive risk tolerance changes the prompt context.
+---
 
-It does not modify model weights.
+# 🎯 What Guess Master Demonstrates
 
-There is no:
+Guess Master brings together several practical AI engineering concepts in one system:
 
-gradient descent
-backpropagation
-fine-tuning
+```text
+                  MULTI-AGENT SYSTEM
+                         │
+        ┌────────────────┼────────────────┐
+        ▼                ▼                ▼
+     Personas          Memory        Relationships
+        │                │                │
+        └────────────────┼────────────────┘
+                         ▼
+                     LLMs
+                         │
+                         ▼
+                  Structured Output
+                         │
+                         ▼
+                  Deterministic Engine
+                         │
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+        Gameplay     Simulation    Statistics
+```
 
-taking place during gameplay.
+The project demonstrates how LLMs can be integrated into a larger software system while keeping **state, rules, validation, and outcomes deterministic**.
 
-Generated personas are not separate models
+---
 
-Generated agents are different behavioral configurations running on the same underlying inference infrastructure.
+# 👨‍💻 Author
 
-Local LLM performance depends on hardware
+**Amru501**
 
-Response latency depends heavily on:
+GitHub:
 
-CPU
-GPU
-RAM
-Model size
-Quantization
-Number of agents
-Concurrent requests
-🚀 Future Improvements
+https://github.com/Amru501/guess-master
 
-Potential future directions include:
+---
 
-Persistent long-term agent memory
-Cross-game learning
-Larger simulation experiments
-Experiment dashboards
-Visualization of agent behavior
-More aggregation strategies
-Weighted voting
-Agent-specific learning
-Evolving relationship networks
-More advanced concurrency
-Additional local LLM backends
-Comparative model evaluation
-Tournament-style agent competitions
-🎯 What This Project Demonstrates
+## 📄 License
 
-Guess Master demonstrates practical implementation of several modern AI engineering concepts:
+No license is currently specified for this repository.
 
-                Guess Master
-                     │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-    LLM APIs     Agent Design   Game Engine
-        │            │            │
-        ▼            ▼            ▼
- Structured       Personas     Deterministic
-   Output        + Memory         Rules
-        │            │            │
-        └────────────┼────────────┘
-                     ▼
-              Multi-Agent System
-                     │
-          ┌──────────┼──────────┐
-          ▼          ▼          ▼
-     Deliberation Adaptation Relationships
-          │          │          │
-          └──────────┼──────────┘
-                     ▼
-               Simulation
-                     │
-                     ▼
-                Statistics
-
-The project combines LLM reasoning with deterministic software engineering, rather than allowing an LLM to control the entire application.
+If the project is intended to be distributed or used as an open-source project, an appropriate license should be added.
