@@ -1,415 +1,819 @@
-# Multi-Personality Number Game
+# 🧠 Guess Master
 
-A terminal-based number game where five distinct personas vote on each offer you make. **V1** uses local [Ollama](https://ollama.com/) for independent LLM votes; **V0 mock mode** remains available for offline play and tests.
+### A Multi-Agent AI Decision-Making Game
 
-## Prerequisites
+Guess Master is a multi-agent decision-making game where multiple AI personas independently analyze the same risk and vote on whether the player should **ADD** the offered value or **REJECT** it.
 
-1. **Python 3.10+**
-2. **Ollama** installed and running locally  
-   - Download: https://ollama.com/download  
-   - Start the Ollama app or run `ollama serve`
-3. **A local model** pulled and available, for example:
+What starts as a simple number game becomes an experimental platform for exploring:
 
-   ```bash
-   ollama pull qwen2.5:3b
-   ```
+- Multi-agent systems
+- AI personas and behavioral modeling
+- Structured LLM outputs
+- Agent memory
+- Adaptive decision-making
+- Multi-agent deliberation
+- Agent relationships and influence
+- Procedurally generated personas
+- Large-scale simulations
+- Behavioral statistics
+- Local LLM inference
 
-## Setup
+The AI makes the decisions. **Python makes the rules.**
 
-```bash
+---
+
+## 🎮 The Concept
+
+Each round, the player receives an offer between **1 and 100**.
+
+A panel of AI personalities analyzes the offer.
+
+For example:
+
+| Agent | Personality | Decision Style |
+|---|---|---|
+| 📊 Analyst | Quantitative | Expected-value driven |
+| 🎲 Gambler | Aggressive | High-risk / high-reward |
+| 🛡️ Conservative | Risk-averse | Protect the current score |
+| ⚡ Impulsive | Instinctive | Fast, intuition-based decisions |
+| ♟️ Strategist | Long-term | Risk-adjusted thinking |
+
+Each agent independently decides:
+
+> **ADD** — take the risk and add the offer to the score
+
+or
+
+> **REJECT** — reject the offer and end the run.
+
+The majority decision determines what happens next.
+
+If **ADD** wins, the game performs a bust roll.
+
+If the roll succeeds:
+
+Current Score + Offer
+
+If the roll fails:
+
+💥 BUST
+Final Score = 0
+
+The goal is simple:
+
+Build the tallest tower without getting greedy.
+
+✨ Features
+🤖 Multi-Agent AI
+
+Instead of relying on a single AI response, Guess Master uses multiple AI personas to make decisions.
+
+Each agent receives its own persona-specific context and produces a structured decision.
+
+The default system uses five core personas, but the architecture supports dynamically generated agent rosters.
+
+🎭 Behavioral Personas
+
+Agents are represented using structured PersonaProfile objects.
+
+A persona can define:
+
+Identity
+Objective
+Risk tolerance
+Decision philosophy
+Behavioral tendencies
+Communication style
+Anti-patterns
+
+This allows the same underlying LLM to behave like fundamentally different decision-makers.
+
+For example:
+
+Gambler
+→ prioritizes upside
+→ accepts high risk
+→ more likely to ADD
+
+Conservative
+→ prioritizes score preservation
+→ dislikes uncertainty
+→ more likely to REJECT
+
+This makes the system persona-driven rather than prompt-driven.
+
+🧠 LLM Architecture
+
+Guess Master uses Ollama for local LLM inference.
+
+The LLM is responsible for:
+
+Understanding the offer
+Applying the persona's reasoning style
+Evaluating risk
+Producing a decision
+Providing confidence
+Explaining its reasoning
+
+The LLM does not control the game state.
+
+Instead, the model returns a structured response that is validated before being passed to the game engine.
+
+Conceptually:
+
+             ┌──────────────────┐
+             │    Game Round    │
+             └────────┬─────────┘
+                      │
+                      ▼
+             ┌──────────────────┐
+             │ Persona Prompts  │
+             └────────┬─────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+     Analyst       Gambler      Conservative
+        │             │             │
+        ▼             ▼             ▼
+      LLM           LLM           LLM
+        │             │             │
+        └─────────────┼─────────────┘
+                      ▼
+              Structured Votes
+                      │
+                      ▼
+             ┌──────────────────┐
+             │   Game Engine    │
+             └────────┬─────────┘
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+          Majority          Game Rules
+             │                 │
+             └────────┬────────┘
+                      ▼
+                 Game State
+🛡️ LLM vs Game Logic
+
+One of the core design principles of Guess Master is:
+
+LLMs propose. Deterministic code disposes.
+
+The AI can say:
+
+{
+  "decision": "ADD",
+  "confidence": 0.82,
+  "reason": "The potential reward justifies the moderate risk."
+}
+
+But it cannot directly modify:
+
+Score
+Bust probability
+Round number
+Majority result
+Game-over state
+
+Python remains the source of truth for the game.
+
+This prevents unpredictable LLM output from corrupting the game mechanics.
+
+🗳️ Majority Voting
+
+Once the agents have voted, the game engine counts their decisions.
+
+With five agents:
+
+ADD      █████  3
+REJECT   ███    2
+
+Result:
+
+MAJORITY → ADD
+
+The voting system is deterministic and independent from the LLM.
+
+The system also enforces odd agent counts when scaling the number of agents, preventing majority ties.
+
+🧠 Agent Memory
+
+Agents can receive a bounded summary of previous completed rounds.
+
+This gives the personas limited game history without giving them unlimited context.
+
+For example:
+
+Previous Round:
+Offer: 20
+Decision: ADD
+Result: SAFE_ADD
+Score: 20
+
+Current Round:
+Offer: 35
+
+The system intentionally keeps memory bounded to prevent unnecessary context growth.
+
+Agent memory is also separated from current-round decision making.
+
+📈 Adaptive Personalities
+
+Guess Master includes an optional adaptive mode.
+
+Enable it with:
+
+python main.py --adaptive
+
+Agents can gradually adjust their effective risk tolerance based on previous outcomes.
+
+For example:
+
+ADD + SAFE_ADD
+        ↓
+Risk tolerance increases
+
+ADD + BUST
+        ↓
+Risk tolerance decreases
+
+REJECT
+        ↓
+No change
+
+Adaptation is bounded so that agents don't become permanently extreme.
+
+The original persona profile remains immutable; adaptation modifies only the effective risk tolerance during the game.
+
+Important
+
+This is not model training.
+
+The LLM weights are never changed.
+
+The system modifies the context given to the model.
+
+💬 Multi-Agent Deliberation
+
+Guess Master can optionally use a two-stage decision process.
+
+Enable it with:
+
+python main.py --deliberate
+
+Instead of:
+
+Agent → Vote
+
+the system becomes:
+
+Initial Votes
+      ↓
+Group Deliberation
+      ↓
+Final Votes
+      ↓
+Majority Decision
+
+Agents can reconsider their original position after seeing the group's initial decisions.
+
+This makes it possible to experiment with questions such as:
+
+Do agents converge?
+Does a strong majority influence minority agents?
+Does deliberation improve outcomes?
+Does deliberation create groupthink?
+How does consensus affect risk-taking?
+🔗 Persona Relationships
+
+Guess Master also supports relationships between agents.
+
+Enable them with:
+
+python main.py --deliberate --relationships
+
+Agents can have relationships such as:
+
+TRUSTS
+DISTRUSTS
+RESPECTS
+DISMISSES
+
+Relationships can influence how agents interpret other agents during deliberation.
+
+For example:
+
+Analyst
+    ↓ respects
+Strategist
+
+Gambler
+    ↓ distrusts
+Conservative
+
+The relationship system affects agent context, not the underlying voting mathematics.
+
+👥 Dynamic Persona Generation
+
+The system is not limited to five hard-coded agents.
+
+Additional personas can be procedurally generated using combinations of controlled traits.
+
+Generated personas can vary in:
+
+Risk tolerance
+Objective
+Decision philosophy
+Communication style
+Behavioral tendencies
+Anti-patterns
+
+The simulation system supports configurable agent counts while enforcing valid voting configurations.
+
+This allows experiments with larger groups such as:
+
+5 agents
+11 agents
+21 agents
+51 agents
+🧪 Simulation Mode
+
+Guess Master includes a non-interactive simulation system for running experiments without manually playing every round.
+
+Simulation parameters can include:
+
+Agent count
+Random seed
+Round limit
+Mock vs LLM agents
+Deliberation
+Adaptive behavior
+Generated personas
+History
+Statistics
+Performance metrics
+
+Example:
+
+python main.py --simulate --mock --agent-count 11 --seed 42
+
+This makes the project useful not only as a game, but also as a small multi-agent experimentation framework.
+
+📊 Behavioral Statistics
+
+After a game or simulation, the system can collect statistics such as:
+
+Completed rounds
+Final score
+Final outcome
+Average offer
+ADD count
+REJECT count
+ADD percentage
+REJECT percentage
+Average confidence
+Majority alignment
+ADD decisions before SAFE_ADD
+ADD decisions before BUST
+Adaptive risk changes
+
+These statistics describe agent behavior, rather than pretending there is a universal "correct" AI decision.
+
+⚡ Performance Metrics
+
+LLM calls can be instrumented using AgentCallMetrics.
+
+Tracked information includes:
+
+Successful calls
+Failed calls
+Total latency
+Average persona-call latency
+Round latency
+Number of agents
+Configured concurrency
+
+This makes it possible to evaluate the performance cost of scaling the multi-agent system.
+
+🛡️ Failure-Safe Execution
+
+LLM applications can fail for reasons unrelated to game logic.
+
+For example:
+
+Ollama unavailable
+Model timeout
+Invalid response
+Connection failure
+
+Guess Master does not silently convert these failures into arbitrary decisions.
+
+If a persona call fails during a round:
+
+LLM failure
+    ↓
+Round cancelled
+    ↓
+Game state preserved
+    ↓
+Player can retry
+
+The system therefore avoids corrupting the score or inventing an AI decision when the model failed.
+
+🧪 Mock Mode
+
+Guess Master includes deterministic mock agents.
+
+Run:
+
+python main.py --mock
+
+Mock mode is useful for:
+
+Development
+Testing
+Debugging
+Demonstrations
+Offline usage
+Reproducible simulations
+
+This means the application does not require an LLM server just to test the game mechanics.
+
+🌐 Browser Interface
+
+Guess Master also includes a local browser version called:
+
+Tower Votes
+
+The browser interface presents the game as a visual tower-building experience.
+
+Players can:
+
+Enter offers
+View persona decisions
+See majority results
+Build their tower
+Track their score
+Play multiple runs
+Compare previous runs
+
+Run the web version with mock agents:
+
+python web_app.py --mock
+
+Or use the local Ollama model:
+
+python web_app.py
+
+Then open:
+
+http://127.0.0.1:5050
+🏗️ Project Architecture
+guess-master/
+│
+├── ai/
+│   ├── config.py
+│   └── ollama_client.py
+│
+├── agents/
+│   ├── profiles.py
+│   ├── personas.py
+│   ├── service.py
+│   ├── adaptation.py
+│   ├── deliberation.py
+│   ├── deliberation_prompts.py
+│   ├── relationships.py
+│   ├── persona_generator.py
+│   ├── mock_factory.py
+│   ├── simulation_config.py
+│   └── metrics.py
+│
+├── game/
+│   ├── engine.py
+│   ├── rules.py
+│   ├── history.py
+│   ├── statistics.py
+│   └── simulation.py
+│
+├── models/
+│   └── schemas.py
+│
+├── templates/
+│   └── index.html
+│
+├── static/
+│   ├── game.css
+│   └── game.js
+│
+├── tests/
+│   ├── test_adaptation.py
+│   ├── test_deliberation.py
+│   ├── test_history.py
+│   ├── test_llm.py
+│   ├── test_main.py
+│   ├── test_profiles.py
+│   ├── test_relationships.py
+│   ├── test_simulation.py
+│   ├── test_statistics.py
+│   ├── test_v11.py
+│   └── test_web_app.py
+│
+├── main.py
+├── web_app.py
+├── requirements.txt
+├── pytest.ini
+└── .env.example
+🔧 Installation
+Requirements
+Python 3.10+
+Ollama
+A compatible local LLM
+pip
+
+Ollama:
+
+https://ollama.com/
+
+1. Clone the repository
+git clone https://github.com/Amru501/guess-master.git
+cd guess-master
+2. Create a virtual environment
+Windows
 python -m venv .venv
-
-# Windows
 .venv\Scripts\activate
-
-# macOS / Linux
+macOS / Linux
+python3 -m venv .venv
 source .venv/bin/activate
-
+3. Install dependencies
 pip install -r requirements.txt
-```
+🤖 Ollama Setup
 
-Copy the example environment file and set your model:
+Install Ollama and download a compatible model.
 
-```bash
+For example:
+
+ollama pull qwen2.5:3b
+
+Create your .env file from the example:
+
+Windows
 copy .env.example .env
-```
+macOS / Linux
+cp .env.example .env
 
-Edit `.env`:
+Example configuration:
 
-```env
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:3b
 OLLAMA_TIMEOUT_SECONDS=180
 OLLAMA_KEEP_ALIVE=10m
-```
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `OLLAMA_HOST` | No | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | **Yes** | — | Installed local model name |
-| `OLLAMA_TIMEOUT_SECONDS` | No | `180` | HTTP timeout per request (must be positive) |
-| `OLLAMA_KEEP_ALIVE` | No | `10m` | How long Ollama keeps the model loaded in memory |
+Make sure Ollama is running before starting the game.
 
-No API key is required — everything runs against your local Ollama instance.
-
-## Run
-
-**Normal mode** (Ollama LLM personas):
-
-```bash
+🎮 Usage
+Basic CLI Game
 python main.py
-```
 
-On first launch, the game verifies Ollama is reachable, confirms the model is installed, then prints `Warming up local model…` and sends a small structured request. This loads the model into memory so the first real persona vote is less likely to time out on a cold start. When warm-up succeeds you will see `Model ready.`
+This starts the normal game using the configured Ollama model.
 
-**Mock mode** (deterministic V0 personas, no Ollama needed):
-
-```bash
+Mock Mode
 python main.py --mock
-```
 
-## Play the browser game
+Runs the game without Ollama.
 
-`Tower Votes` is a local browser game layered on top of the same Python game
-engine. Each accepted offer adds that many animated slabs to your tower. A bust
-collapses the tower; a REJECT cashes it out. When a run ends, the stage zooms
-out to compare the completed tower with recent local runs.
-
-Install the updated requirements once:
-
-```bash
-pip install -r requirements.txt
-```
-
-Start with deterministic mock personas:
-
-```bash
-python web_app.py --mock
-```
-
-Or start the real local-Ollama panel:
-
-```bash
-python web_app.py
-```
-
-Then open [http://127.0.0.1:5050](http://127.0.0.1:5050). Completed runs are stored
-locally in `data/tower-runs.json` (gitignored). The UI shows your **best five**
-runs ranked by tower height; zero-slab runs are hidden.
-
-**Show history during play:**
-
-```bash
-python main.py --show-history
-```
-
-**Save history to JSON when the game ends:**
-
-```bash
-python main.py --history-file game-history.json
-```
-
-**Save statistics only:**
-
-```bash
-python main.py --stats-file game-stats.json
-```
-
-```bash
+Adaptive Mode
 python main.py --adaptive
-```
 
-When `--history-file` is used, the saved JSON includes both raw round history and calculated statistics.
+Enables adaptive risk tolerance.
 
-Use `--mock` when Ollama is not installed, not running, or you want fast offline play without waiting for model inference.
-
-### Agent failures during a round
-
-If a persona call fails mid-round (timeout, malformed response, etc.), the game:
-
-- Shows which persona failed and the technical error
-- Cancels the round without changing your score
-- Returns you to the same round so you can retry or quit
-
-No vote is invented and the failure does not count as a rejection, bust, or game over.
-
-## Test
-
-Tests mock or inject the Ollama client and never require a running Ollama instance:
-
-```bash
-pytest
-```
-
-Verbose output:
-
-```bash
-pytest -v
-```
-
-## Game Rules
-
-- The game starts with **score = 0** and **round = 1**.
-- Each round, enter an integer **offer from 1 to 100** (or type `q` / `quit` to exit).
-- Each offer has a bust probability:
-
-  `bust_probability = min(0.70, 0.02 + number / 240)`
-
-- Five personas independently vote **ADD** or **REJECT**:
-  - **Analyst** 📊 — moderate, logic-based
-  - **Gambler** 🎲 — aggressive, risk-seeking
-  - **Conservative** 🛡️ — risk-averse
-  - **Impulsive** ⚡ — instinct-driven
-  - **Strategist** ♟️ — balances score, offer value, and risk
-
-- The Python engine counts votes; **ADD** or **REJECT** wins by strict majority (ties are impossible with five voters). The LLM never calculates the majority or modifies game state.
-- If **ADD** has the majority:
-  - A bust roll is made using the bust probability.
-  - **Safe:** the offer is added to your score, the round increments, and play continues.
-  - **Bust:** game over with **final score = 0**.
-- If **REJECT** has the majority:
-  - You cash out with your **current score** as the final score.
-
-## Project Layout
-
-```
-main.py              CLI entry point (--mock / Ollama mode)
-agents/
-  profiles.py        PersonaProfile definitions and prompt builder
-  adaptation.py    Bounded risk-tolerance adaptation from history
-  deliberation.py  Deliberation brief and round result types
-  deliberation_prompts.py  Final-vote prompt builder
-  relationships.py Static persona relationship graph (V7)
-  persona_generator.py  Seeded trait-based persona generation (V8)
-  simulation_config.py  Agent-count and concurrency validation (V8)
-  mock_factory.py    Mock voters for arbitrary rosters (V8)
-  metrics.py         Simulation latency metrics (V8)
-  personas.py        V0 mock voters (use shared profiles)
-  service.py         Ollama calls and vote conversion
-ai/
-  config.py          .env configuration loading and validation
-  ollama_client.py   Only module that imports ollama
-game/
-  engine.py          Game state and round processing
-  history.py         Round records, outcomes, bounded memory
-  statistics.py      Post-game behavioral metrics
-  simulation.py      Non-interactive simulation runner (V8)
-  rules.py           Bust math, validation, majority counting
-models/
-  schemas.py         Pydantic LLM response schema
-tests/
-```
-
-## Version Notes
-
-**V0** used five deterministic mock personas. Use `python main.py --mock` to play that mode.
-
-**V1** replaces mock voting with five independent Ollama calls — one per persona — while keeping the same game rules, majority logic, and bust behavior in Python.
-
-**V1.1** adds configurable timeouts and keep-alive, first-run model warm-up, round cancellation on agent failures, and tighter Ollama request limits (`num_predict`) for reliable short JSON responses.
-
-**V2** replaces one-line persona descriptions with explicit **PersonaProfile** behavioral profiles (objective, risk tolerance, philosophy, tendencies, communication style, and anti-patterns). Prompts are assembled from these fields so each persona receives a rich, consistent identity. Mock mode uses the same profile definitions for names and emojis.
-
-## Persona Modeling
-
-Each persona is defined by a reusable `PersonaProfile` rather than a single hard-coded instruction string. Profiles include identity, objective, risk tolerance (0.0–1.0), decision philosophy, behavioral tendencies, communication style, and anti-patterns. The prompt builder turns these fields into an independent vote prompt for each call.
-
-Different persona behavior does **not** require different underlying models. The same local model (e.g. `qwen2.5:3b`) can play every role because behavior is shaped by the profile and prompt, not by separate fine-tuned weights. Each persona still receives its own isolated call with no visibility into other votes.
-
-## Round History and Agent Memory (V3)
-
-Each game keeps an in-memory **GameHistory** of completed rounds. A round is recorded only after it finishes successfully — technical failures that cancel a round are **not** stored.
-
-Every completed record includes the round number, offer, scores before/after, bust probability, all persona votes (with reasons), majority decision, and outcome (`SAFE_ADD`, `BUST`, or `CASH_OUT`).
-
-**Bounded prompt memory:** before each vote, personas receive a compact summary of the latest **3 successful (`SAFE_ADD`) rounds** only — offer, majority, outcome, and score after. They never see other personas' current-round votes. The **Strategist** prompt explicitly instructs use of this history to protect or pursue long-term score; other personas receive the same facts but decide in character.
-
-Use `--show-history` to print completed rounds during a game. Use `--history-file path.json` to save readable JSON when the game ends. Prior games are not loaded automatically.
-
-Example saved history (includes statistics when using `--history-file`):
-
-```json
-{
-  "rounds": [
-    {
-      "round_number": 1,
-      "offer": 50,
-      "score_before": 0,
-      "score_after": 50,
-      "bust_probability": 0.4666666666666667,
-      "votes": [
-        {
-          "name": "Analyst",
-          "emoji": "📊",
-          "decision": "ADD",
-          "confidence": 0.82,
-          "reason": "Expected gain meets threshold."
-        }
-      ],
-      "majority_decision": "ADD",
-      "outcome": "SAFE_ADD"
-    }
-  ],
-  "statistics": {
-    "completed_rounds": 1,
-    "final_outcome": "QUIT",
-    "final_score": 50,
-    "average_offer": 50.0,
-    "add_majority_rounds": 1,
-    "reject_majority_rounds": 0,
-    "bust_count": 0,
-    "personas": []
-  }
-}
-```
-
-**V3** adds round history, bounded agent memory in prompts, `--show-history`, and `--history-file`.
-
-## Post-Game Statistics (V4)
-
-When a game ends, the CLI prints a **post-game statistics report**. Metrics are derived from completed round history and describe **behavioral patterns**, not objective correctness — there is no “success rate” and votes are never labeled good or bad.
-
-**Per persona:** rounds voted, ADD/REJECT counts and percentages, average confidence, majority-alignment rate, ADD votes before `SAFE_ADD`, ADD votes before `BUST`.
-
-**Game summary:** completed rounds, final outcome, final score, average offer, ADD-majority count, REJECT-majority count, bust count.
-
-Use `--stats-file path.json` to save statistics alone. Games with zero completed rounds produce empty metrics safely.
-
-## Bounded Adaptive Personalities (V5)
-
-Use `--adaptive` to enable **optional** risk-tolerance adjustment during a single game. Base `PersonaProfile` definitions are **immutable**; adaptation affects LLM prompts only, never Python game rules.
-
-**Transparent adjustment rules** (from completed rounds only — not cancelled technical failures):
-
-| Event | Effect on persona |
-|-------|-------------------|
-| Voted **ADD** on a **SAFE_ADD** round | Risk tolerance **+0.03** |
-| Voted **ADD** on a **BUST** round | Risk tolerance **−0.03** |
-| Voted **REJECT** | No change (REJECT does not imply causing the outcome) |
-| **CASH_OUT** round | No change |
-
-Total adjustment is clamped to **−0.15 … +0.15**. Effective risk tolerance = base + adjustment (clamped to 0.0–1.0).
-
-When enabled, prompts show base and effective risk tolerance with the adjustment explained. Post-game statistics include adjustment fields. Default behavior (without `--adaptive`) uses fixed base profiles.
-
-**Limitations:** adaptation is deterministic, in-memory, per-game only, and does not prove a persona was objectively right or wrong — it only reflects recent voting experience.
-
-## Optional Deliberation Mode (V6)
-
-Use `--deliberate` to enable a **two-stage voting experiment** that is separate from normal independent play:
-
-```bash
+Deliberation Mode
 python main.py --deliberate
-python main.py --mock --deliberate
-```
 
-**Warning:** Deliberation **removes vote independence**. Personas see each other's initial votes before casting a final vote. This is a controlled comparison experiment — not the same game as default mode. Results from deliberation runs should not be directly compared to independent-voting runs without acknowledging that difference.
+Enables two-stage agent deliberation.
 
-**Round flow (deliberation only):**
-
-1. Each persona casts an **initial independent vote** (same V1/V2 prompt flow as normal mode).
-2. Python collects all initial votes and builds a shared **deliberation brief** (name, decision, confidence, reason).
-3. Each persona receives the brief plus its own game state and submits one **final vote**.
-4. Python counts **only final votes** for the majority. The LLM never calculates vote counts or outcomes.
-
-The CLI shows initial votes, the deliberation brief, final votes, vote-change summary, and final majority. Completed history records store both `initial_votes` and final `votes` when deliberation is enabled.
-
-Technical failure at **either** stage cancels the round with no score change — same as V1.1 independent mode. Normal mode (without `--deliberate`) is unchanged: one vote per persona per round.
-
-## Persona Relationship Graph (V7)
-
-Use `--relationships` with `--deliberate` to add an **experimental influence layer** during final deliberation only. Relationships do **not** change Python vote counting, bust math, or any game rules — they appear only as optional context in final deliberation prompts.
-
-```bash
+Relationship Mode
 python main.py --deliberate --relationships
-python main.py --mock --deliberate --relationships --verbose
+
+Enables deliberation and persona relationships.
+
+Verbose Mode
+python main.py --verbose
+
+Useful for seeing additional agent/game information during execution.
+
+Show History
+python main.py --show-history
+
+Displays completed round history during gameplay.
+
+Save Game History
+python main.py --history-file game-history.json
+Save Statistics
+python main.py --stats-file game-stats.json
+Export Relationship Graph
 python main.py --export-graph persona-graph.json
-```
+🌐 Running the Web Version
+Mock Mode
+python web_app.py --mock
+Ollama Mode
+python web_app.py
 
-**Warning:** This is an experimental social-influence layer on top of deliberation (which already removes independence). Use it to study how stated inter-persona attitudes might shift final votes — not as a neutral baseline.
+Open:
 
-`--relationships` alone has no effect; both `--deliberate` and `--relationships` must be active. Use `--verbose` to print each persona's outgoing relationship context during deliberation rounds.
+http://127.0.0.1:5050
+🧪 Running Tests
 
-Each relationship edge includes a source persona, target persona, type (`trusts`, `distrusts`, `respects`, `dismisses`), influence weight (−1.0 … 1.0), and a short explanation shown in prompts. Each persona receives **only its outgoing edges**, e.g. “You tend to trust Analyst's quantitative analysis.”
+Guess Master includes a pytest test suite covering the major components of the system.
 
-The graph is **static** for now — relationships do not evolve during play.
+Run:
 
-### Static relationship map
+pytest
 
-```
-                 ┌─────────────┐
-                 │  Strategist │
-                 └──────▲──┬───┘
-            respects     │ distrusts
-                 ┌───────┘ └───────┐
-           ┌─────┴─────┐     ┌─────┴─────┐
-           │  Analyst  │     │ Impulsive │
-           └─────▲──┬──┘     └─────▲──┬──┘
-      trusts      │ dismisses  respects│ dismisses
-           ┌──────┴───┐         ┌─────┴─────┐
-           │Conservative│     │  Gambler  │
-           └──────▲─────┘     └─────▲─────┘
-           dismisses│ trusts/distrusts
-                    └───────────────┘
-```
+For verbose output:
 
-| Source → Target | Type | Weight | Effect in prompt |
-|-----------------|------|--------|------------------|
-| Analyst → Strategist | respects | +0.65 | Respect long-term score reasoning |
-| Analyst → Gambler | dismisses | −0.55 | Discount risk-seeking arguments |
-| Gambler → Impulsive | trusts | +0.50 | Trust bold instinct |
-| Gambler → Conservative | distrusts | −0.45 | Distrust overcautious caution |
-| Conservative → Analyst | trusts | +0.60 | Trust quantitative analysis |
-| Conservative → Gambler | dismisses | −0.70 | Discount risk-seeking arguments |
-| Impulsive → Gambler | respects | +0.40 | Respect appetite for bold moves |
-| Impulsive → Analyst | dismisses | −0.35 | Dismiss slow number-crunching |
-| Strategist → Analyst | respects | +0.55 | Respect expected-value reasoning |
-| Strategist → Impulsive | distrusts | −0.50 | Distrust gut-driven swings |
+pytest -v
 
-Export the full graph as JSON with `--export-graph <path>` (no game run required).
+The test suite covers areas including:
 
-## Scaled Simulation Experiments (V8)
+Game rules
+Game engine
+Persona profiles
+LLM integration
+History
+Statistics
+Adaptation
+Deliberation
+Relationships
+Persona generation
+Simulation
+CLI behavior
+Web application behavior
 
-The default interactive game remains **five named personas** with no CLI changes required. Use scaling flags for controlled experiments with additional generated agents.
+LLM-dependent functionality can be mocked, allowing the test suite to run without a live Ollama model.
 
-```bash
-# Default — unchanged five-persona interactive game
-python main.py --mock
+🧩 Design Principles
+1. Deterministic Game State
 
-# 21-agent mock simulation (seeded, auto-saves history)
-python main.py --mock --simulate --agent-count 21 --seed 42 --round-limit 10
+The game engine is the authority on:
 
-# 51-agent experiment with bounded Ollama concurrency
-python main.py --simulate --agent-count 51 --seed 7 --max-concurrency 2 --round-limit 5
-```
+Score
+Bust probability
+Majority voting
+Round progression
+Game-over conditions
+2. Structured AI Output
 
-### Scaling flags
+LLM responses are validated against structured schemas rather than being interpreted as arbitrary text.
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--agent-count N` | 5 | Total voters (odd, 5–51). Core five personas are always included. |
-| `--seed N` | 42 in simulate | Reproducible generated personas and offer sequence. |
-| `--round-limit N` | none | Stop simulation after N rounds (otherwise until bust or cash-out). |
-| `--simulate` | off | Non-interactive mode with seeded offers 1–100. |
-| `--max-concurrency N` | 1 | Concurrent Ollama persona calls (1 … agent-count). |
+This reduces the chance of malformed model output affecting the game.
 
-**Odd agent count required** — even values are rejected with a helpful message so majority ties cannot occur.
+3. Separation of Concerns
 
-Additional personas are generated from controlled trait combinations (risk tolerance, objective, decision philosophy, communication style). The original Analyst, Gambler, Conservative, Impulsive, and Strategist profiles are never modified.
+The project separates:
 
-### Performance reporting
+AI integration
+       ↓
+Agent behavior
+       ↓
+Game logic
+       ↓
+Statistics
+       ↓
+Interfaces
 
-Simulation runs report:
+The CLI and web interface use the same underlying game concepts rather than implementing separate game rules.
 
-- Total round latency
-- Average persona-call latency
-- Successful / failed call counts
-- Configured agent count and concurrency
+4. Explicit Experimental Modes
 
-Python majority aggregation remains deterministic; concurrency affects scheduling only, not vote counting order.
+Advanced behavior is opt-in.
 
-### Resource warnings
+The basic game remains simple, while users can progressively enable:
 
-This project does **not** target 100–200 agents by default. Practical limits depend on your CPU/GPU, Ollama model size, and `--max-concurrency`. Start with `--mock --simulate` to validate experiment design, then scale Ollama runs gradually (e.g. 21 → 51 agents, concurrency 1–2). Large agent counts multiply LLM calls per round and can exhaust memory or exceed timeouts.
-#   g u e s s - m a s t e r  
- 
+Adaptive behavior
+       ↓
+Deliberation
+       ↓
+Relationships
+       ↓
+Generated agents
+       ↓
+Simulation
+
+This makes it possible to compare different multi-agent configurations.
+
+📚 Version Evolution
+
+The project was developed incrementally, with each stage adding a new capability.
+
+Version	Feature
+V0	Five deterministic mock personas
+V1	Local Ollama-backed LLM agents
+V1.1	Reliability improvements and structured LLM responses
+V2	Rich reusable persona profiles
+V3	Bounded game history and agent memory
+V4	Behavioral statistics
+V5	Adaptive risk tolerance
+V6	Two-stage deliberation
+V7	Persona relationship graph
+V8	Generated personas, configurable agent counts and simulation
+Web	Browser-based Tower Votes interface
+⚠️ Limitations
+
+Guess Master is an experimentation project rather than a claim that each persona represents a completely independent intelligence.
+
+Shared underlying model
+
+Multiple personas can use the same underlying LLM.
+
+The diversity primarily comes from:
+
+Persona profiles
+Prompt construction
+Context
+Decision history
+Relationships
+Adaptation
+Deliberation reduces independence
+
+In independent mode, agents do not see other agents' current-round decisions.
+
+In deliberation mode, agents can see the group's initial decisions.
+
+Therefore deliberation intentionally changes the independence assumption.
+
+Adaptation is not machine learning
+
+Adaptive risk tolerance changes the prompt context.
+
+It does not modify model weights.
+
+There is no:
+
+gradient descent
+backpropagation
+fine-tuning
+
+taking place during gameplay.
+
+Generated personas are not separate models
+
+Generated agents are different behavioral configurations running on the same underlying inference infrastructure.
+
+Local LLM performance depends on hardware
+
+Response latency depends heavily on:
+
+CPU
+GPU
+RAM
+Model size
+Quantization
+Number of agents
+Concurrent requests
+🚀 Future Improvements
+
+Potential future directions include:
+
+Persistent long-term agent memory
+Cross-game learning
+Larger simulation experiments
+Experiment dashboards
+Visualization of agent behavior
+More aggregation strategies
+Weighted voting
+Agent-specific learning
+Evolving relationship networks
+More advanced concurrency
+Additional local LLM backends
+Comparative model evaluation
+Tournament-style agent competitions
+🎯 What This Project Demonstrates
+
+Guess Master demonstrates practical implementation of several modern AI engineering concepts:
+
+                Guess Master
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+    LLM APIs     Agent Design   Game Engine
+        │            │            │
+        ▼            ▼            ▼
+ Structured       Personas     Deterministic
+   Output        + Memory         Rules
+        │            │            │
+        └────────────┼────────────┘
+                     ▼
+              Multi-Agent System
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+     Deliberation Adaptation Relationships
+          │          │          │
+          └──────────┼──────────┘
+                     ▼
+               Simulation
+                     │
+                     ▼
+                Statistics
+
+The project combines LLM reasoning with deterministic software engineering, rather than allowing an LLM to control the entire application.
