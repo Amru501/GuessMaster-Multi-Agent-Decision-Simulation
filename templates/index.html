@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tower Votes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='game.css') }}">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">MULTI-AGENT NUMBER GAME</p>
+          <h1>Tower Votes</h1>
+        </div>
+        <div class="mode" id="mode">{{ mode }}</div>
+      </header>
+
+      <section class="game-layout" aria-label="Tower Votes game">
+        <section class="tower-stage" aria-label="Your slab tower">
+          <div class="stage-head">
+            <div>
+              <span class="label">CURRENT TOWER</span>
+              <strong id="score">0</strong><span class="unit"> slabs</span>
+            </div>
+            <div class="round"><span class="label">ROUND</span><strong id="round">1</strong></div>
+          </div>
+          <canvas id="tower-canvas" aria-label="Animated slab tower"></canvas>
+          <div class="stage-message" id="stage-message" aria-live="polite">Build as high as the panel allows.</div>
+        </section>
+
+        <aside class="control-panel">
+          <section class="offer-card">
+            <p class="eyebrow">NEXT OFFER</p>
+            <label for="offer">How many slabs?</label>
+            <div class="offer-row">
+              <input id="offer" type="number" min="1" max="100" value="15" inputmode="numeric">
+              <button id="submit-offer" type="button">Ask the panel</button>
+            </div>
+            <p class="risk" id="risk">IF ADD WINS · 8% bust chance</p>
+            <p class="risk-note">REJECT ends the run immediately — no bust roll.</p>
+          </section>
+
+          <section class="panel-card">
+            <div class="panel-title-row">
+              <div>
+                <p class="eyebrow">AI PANEL</p>
+                <h2>Independent votes</h2>
+              </div>
+              <span class="vote-count" id="vote-count">Waiting</span>
+            </div>
+            <div class="votes" id="votes" aria-live="polite">
+              <p class="empty-state">Choose an offer to hear from the five personas.</p>
+            </div>
+            <div class="majority" id="majority" hidden></div>
+          </section>
+
+          <button class="new-game" id="new-game" type="button" hidden>Build a new tower</button>
+        </aside>
+      </section>
+
+      <section class="comparison" id="comparison" hidden aria-live="polite">
+        <div>
+          <p class="eyebrow">RUN COMPARISON</p>
+          <h2>Your best five runs</h2>
+        </div>
+        <div class="run-bars" id="run-bars"></div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='game.js') }}"></script>
+  </body>
+</html>
